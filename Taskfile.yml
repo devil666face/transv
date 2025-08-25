@@ -1,0 +1,25 @@
+version: "3"
+
+vars:
+  bin: .venv/bin/
+
+tasks:
+  build:
+    desc: build docker image
+    silent: true
+    cmds:
+      - docker compose build
+
+  test:
+    desc: build and test
+    deps:
+      - build
+    cmds:
+      - docker compose run --rm transv 'https://www.youtube.com/watch?v=6uB65PdasQI'
+
+  push:
+    desc: push image on registry
+    deps:
+      - build
+    cmds:
+      - docker push ghcr.io/devil666face/transv

@@ -1,0 +1,14 @@
+services:
+  transv:
+    image: ghcr.io/devil666face/transv:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: transv
+    volumes:
+      - ./db:/transv/db
+      - ./downloads:/transv/downloads
+    env_file:
+      - .env
+    network_mode: "host"
+    tty: true

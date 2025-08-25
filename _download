@@ -1,0 +1,41 @@
+#!/bin/bash
+
+OUTDIR="./downloads"
+
+if [ "$#" -ne 1 ]; then
+	echo "Usage: $0 <youtube url>"
+	exit 1
+fi
+
+URL="$1"
+
+download_video() {
+	local url="$1"
+	echo "Download video"
+	VIDEO_PATH=$(yt-dlp -t mp4 -S res:$RESOLUTION --cookies ./db/cookies.txt --proxy $PROXY -P "$OUTDIR" --print after_move:filepath "${url}" | tail -n 1)
+}
+
+download_audio() {
+	local url="$1"
+	local video_path="$2"
+	VOICE_DIR=$(dirname "$video_path")
+	VOICE_NAME=voice-$(basename "$video_path").mp3
+	VOICE_PATH=$VOICE_DIR/$VOICE_NAME
+	echo "Download translated audio"
+	vot-cli --output="${VOICE_DIR}" --output-file="${VOICE_NAME}" "${url}"
+}
+
+merge_audio_video() {
+	local video_path="$1"
+	local voice_path="$2"
+	echo "Run ffmpeg"
+	VIDEO_TRANSLATED=$(dirname "$video_path")/translated-$(basename "$video_path")
+	ffmpeg -y -i "${video_path}" -i "${voice_path}" -filter_complex "[0:a]volume=0.3[a0];[a0][1:a]amerge=inputs=2[a]" -map 0:v:0 -map "[a]" -c:v copy -c:a aac -strict experimental "${VIDEO_TRANSLATED}"
+	rm -rf "$voice_path" "$video_path"
+}
+
+download_video "$URL"
+download_audio "$URL" "$VIDEO_PATH"
+merge_audio_video "$VIDEO_PATH" "$VOICE_PATH"
+
+rm -rf "$VIDEO_PATH" "$VOICE_PATH"
